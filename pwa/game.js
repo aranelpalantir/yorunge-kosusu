@@ -413,8 +413,8 @@
     if (view) {
       canvas.style.left = view.offsetLeft + 'px';
       canvas.style.top = view.offsetTop + 'px';
-      canvas.style.width = view.width + 'px';
-      canvas.style.height = view.height + 'px';
+      canvas.style.width = Math.max(view.width, window.innerWidth) + 'px';
+      canvas.style.height = Math.max(view.height, window.innerHeight) + 'px';
     }
     const dpr = Math.min(window.devicePixelRatio || 1, 2), box = canvas.getBoundingClientRect();
     const nextW = Math.round(box.width * dpr), nextH = Math.round(box.height * dpr);
@@ -464,6 +464,10 @@
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 350); });
+  window.addEventListener('load', resize);
+  window.addEventListener('pageshow', resize);
+  // Phones opened sideways can settle on their final size without firing any event.
+  setInterval(resize, 500);
   if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
   if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
   window.addEventListener('appinstalled', () => { installEvent = null; installPanel = false; menuHint = 'Oyun yüklendi'; });
