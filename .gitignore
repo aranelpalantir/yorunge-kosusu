@@ -1,0 +1,9 @@
+.tools/
+build/
+*.jks
+*.idsig
+
+.claude/
+.impeccable/
+dist/
+STORY.md
