@@ -399,6 +399,14 @@
 
   function resize() {
     // The canvas box is the source of truth: on phones window.innerHeight can differ from it, and it can lag behind a rotation.
+    // Toolbars can cover part of a full-height box on phones, so the canvas follows the area that is actually visible.
+    const view = window.visualViewport;
+    if (view) {
+      canvas.style.left = view.offsetLeft + 'px';
+      canvas.style.top = view.offsetTop + 'px';
+      canvas.style.width = view.width + 'px';
+      canvas.style.height = view.height + 'px';
+    }
     const dpr = Math.min(window.devicePixelRatio || 1, 2), box = canvas.getBoundingClientRect();
     const nextW = Math.round(box.width * dpr), nextH = Math.round(box.height * dpr);
     if (nextW <= 0 || nextH <= 0 || (nextW === w && nextH === h)) return;
@@ -434,7 +442,7 @@
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 350); });
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  if (window.visualViewport) { window.visualViewport.addEventListener('resize', resize); window.visualViewport.addEventListener('scroll', resize); }
   if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
   window.addEventListener('appinstalled', () => { installEvent = null; installPanel = false; menuHint = 'Oyun yüklendi'; });
   resize();
