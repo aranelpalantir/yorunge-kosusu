@@ -374,7 +374,10 @@
   let endingTime = 0, signalGlow = 0, whiteOut = 0;
   // A newly activated build reloads the game the next time the player is on the main menu, never during a run.
   let updateReady = false;
-  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('controllerchange', () => { updateReady = true; });
+  const pageBuild = document.currentScript ? new URL(document.currentScript.src).searchParams.get('v') : null;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('controllerchange', () => {
+    caches.has(`yorunge-${pageBuild}`).then(current => { if (!current) updateReady = true; });
+  });
   let levelScroll = 0, dragStart = 0, scrollStart = 0, stripDragging = false, stripMoved = false;
   let menuHint = 'Bölümleri sağa / sola kaydır', failure = 'Boşluğa düştün. Zıpla ya da duvar değiştir.';
   let restartNotice = 0, completionNotice = 0, signalTime = 0, signalText = '', completedLevel = -1;

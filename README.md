@@ -8,7 +8,7 @@
 
 **Android:** `dist/Yorunge-Kosusu.apk` dosyasını cihaza kopyalayıp açın. Android isterse "Bilinmeyen uygulamaları yükle" iznini verin. APK yerel anahtarla imzalıdır, Play Store paketi değildir. Eski kurulumu silmeden güncelleyebilirsiniz; ilerleme korunur.
 
-**PWA:** `pwa/` klasörünü HTTPS üzerinden yayınlayın ve adresi tarayıcıda açın. Ana menünün üstündeki **Yükle** düğmesi oyunu cihaza kurar. İlk açılıştan sonra çevrimdışı çalışır. Yayınlanan yeni derleme, oyun açıldığında veya öne geldiğinde arka planda indirilir. Oyun ana menüdeyse hemen, koşudaysa ana menüye dönünce yenilenir; ilerleme korunur. APK otomatik güncellenmez.
+**PWA:** `pwa/` klasörünü HTTPS üzerinden yayınlayın ve adresi tarayıcıda açın. Ana menünün üstündeki **Yükle** düğmesi oyunu cihaza kurar. İlk açılıştan sonra çevrimdışı çalışır. İnternet varken yeni derleme bir sonraki açılışta gelir. Oyun açıkken yayınlanan derleme, oyun öne geldiğinde indirilir; oyun ana menüdeyse hemen, koşudaysa ana menüye dönünce yenilenir. İlerleme korunur. APK otomatik güncellenmez.
 
 | Platform | Yükle düğmesi |
 | --- | --- |
