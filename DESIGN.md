@@ -4,6 +4,8 @@ Yatay oynanan, deneyim odaklı bir oyun. Özgün geometrik uzay dünyasında der
 
 Büyük başparmak düğmeleri alt köşelerde, müzik ve duraklatma sağ üsttedir. Üst bilgi alanı bölüm kimliğini ve ilerlemeyi ayrı gösterir. Menü, duraklatma, başarısızlık ve bitiş ekranlarının her birinde tek bir kehribar ana düğme bulunur. Tüm metinler Türkçedir ve sistemin sans-serif yazı tipini kullanır. Tüm şekiller kodla çizilir.
 
+Telefonda yan tutulduğunda (görünür yükseklik 500 pikselin altında) PWA, görüntüyü kenardan kenara kullanır ve düğmelerle yazıları çentik ve ana ekran çubuğu dışında tutar. Yön düğmeleri ve Zıpla büyür, karakter kartları ekran genişliğine yayılır, yazılar yaklaşık %22 büyür ve menü alt başlığı gizlenir. Tünel zemini kameranın gerisine uzanır, böylece her ekran oranında kenarlara ulaşır.
+
 Erişilebilirlik sınırı: Canvas ile çizilen oyun görseldir, tam bir ekran okuyucu gezinme yapısı sunmaz.
 
 ## Engeller

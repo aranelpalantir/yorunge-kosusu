@@ -387,6 +387,9 @@
   let keyLeft = false, keyRight = false, keyJump = false, overlayChoice = 0;
 
   let w = 0, h = 0, u = 1, cx = 0, cy = 0, focal = 0;
+  // compact: a phone held sideways. Controls and text grow, and the safe area keeps them clear of the notch.
+  let compact = false, safeL = 0, safeR = 0, safeB = 0, edgeL = 0, edgeR = 0;
+  const fs = size => compact ? size * 1.22 : size;
   const rect = () => ({ left: 0, top: 0, right: 0, bottom: 0, set(l, t, r, b) { this.left = l; this.top = t; this.right = r; this.bottom = b; }, width() { return this.right - this.left; }, height() { return this.bottom - this.top; }, centerX() { return (this.left + this.right) / 2; }, centerY() { return (this.top + this.bottom) / 2; }, contains(x, y) { return x >= this.left && x <= this.right && y >= this.top && y <= this.bottom; } });
   const leftBtn = rect(), rightBtn = rect(), jumpBtn = rect(), pauseBtn = rect(), primaryBtn = rect(), secondaryBtn = rect();
   const inGameMusic = rect(), trackButton = rect(), musicButton = rect(), effectsButton = rect(), menuStart = rect(), endlessButton = rect(), levelStrip = rect();
@@ -412,35 +415,48 @@
     }
     const dpr = Math.min(window.devicePixelRatio || 1, 2), box = canvas.getBoundingClientRect();
     const nextW = Math.round(box.width * dpr), nextH = Math.round(box.height * dpr);
-    if (nextW <= 0 || nextH <= 0 || (nextW === w && nextH === h)) return;
-    w = nextW;
-    h = nextH;
-    canvas.width = w;
-    canvas.height = h;
+    const probe = getComputedStyle(document.getElementById('safe-probe'));
+    const nextL = (parseFloat(probe.paddingLeft) || 0) * dpr, nextR = (parseFloat(probe.paddingRight) || 0) * dpr, nextB = (parseFloat(probe.paddingBottom) || 0) * dpr;
+    if (nextW <= 0 || nextH <= 0 || (nextW === w && nextH === h && nextL === safeL && nextR === safeR && nextB === safeB)) return;
+    safeL = nextL; safeR = nextR; safeB = nextB;
+    compact = box.height < 500;
+    if (nextW !== w || nextH !== h) {
+      w = nextW;
+      h = nextH;
+      canvas.width = w;
+      canvas.height = h;
+    }
     u = Math.min(w / 1100, h / 650);
     cx = w * 0.5;
     cy = h * 0.40;
     focal = h * 0.88;
-    const s = 98 * u, m = 32 * u;
-    leftBtn.set(m, h - m - s, m + s, h - m);
-    rightBtn.set(m + s + 18 * u, h - m - s, m + 2 * s + 18 * u, h - m);
-    jumpBtn.set(w - m - 180 * u, h - m - s, w - m, h - m);
-    pauseBtn.set(w - m - 64 * u, m, w - m, m + 58 * u);
+    const s = (compact ? 136 : 98) * u, m = 32 * u, gap = (compact ? 14 : 18) * u, jumpW = (compact ? 220 : 180) * u;
+    edgeL = Math.max(compact ? 22 * u : m, safeL + 8 * u);
+    edgeR = Math.max(compact ? 22 * u : m, safeR + 8 * u);
+    const edgeB = Math.max(compact ? 22 * u : m, safeB + 6 * u);
+    leftBtn.set(edgeL, h - edgeB - s, edgeL + s, h - edgeB);
+    rightBtn.set(edgeL + s + gap, h - edgeB - s, edgeL + 2 * s + gap, h - edgeB);
+    jumpBtn.set(w - edgeR - jumpW, h - edgeB - s, w - edgeR, h - edgeB);
+    pauseBtn.set(w - edgeR - 64 * u, m, w - edgeR, m + 58 * u);
     primaryBtn.set(cx - 175 * u, h * 0.61, cx + 175 * u, h * 0.61 + 66 * u);
     secondaryBtn.set(cx - 175 * u, h * 0.61 + 82 * u, cx + 175 * u, h * 0.61 + 140 * u);
-    trackButton.set(28 * u, 20 * u, 350 * u, 72 * u);
-    inGameMusic.set(w - 280 * u, 32 * u, w - 114 * u, 90 * u);
-    musicButton.set(w - 208 * u, 20 * u, w - 28 * u, 72 * u);
-    effectsButton.set(w - 400 * u, 20 * u, w - 220 * u, 72 * u);
-    menuStart.set(cx - 310 * u, h * 0.51, cx - 10 * u, h * 0.51 + 62 * u);
-    endlessButton.set(cx + 10 * u, h * 0.51, cx + 310 * u, h * 0.51 + 62 * u);
-    for (let i = 0; i < 4; i++) { const x = cx + (i - 1.5) * 175 * u; characterButtons[i].set(x - 80 * u, h * 0.31, x + 80 * u, h * 0.31 + 114 * u); }
+    trackButton.set(edgeL, 20 * u, edgeL + 322 * u, 72 * u);
+    inGameMusic.set(w - edgeR - 248 * u, 32 * u, w - edgeR - 82 * u, 90 * u);
+    musicButton.set(w - edgeR - 180 * u, 20 * u, w - edgeR, 72 * u);
+    effectsButton.set(w - edgeR - 372 * u, 20 * u, w - edgeR - 192 * u, 72 * u);
+    const startTop = compact ? 306 * u : h * 0.51, startH = (compact ? 68 : 62) * u;
+    menuStart.set(cx - 310 * u, startTop, cx - 10 * u, startTop + startH);
+    endlessButton.set(cx + 10 * u, startTop, cx + 310 * u, startTop + startH);
+    const cardGap = 15 * u, cardW = compact ? Math.min((w - edgeL - edgeR - 3 * cardGap) / 4, 300 * u) : 160 * u;
+    const cardTop = compact ? 140 * u : h * 0.31, cardH = (compact ? 152 : 114) * u;
+    for (let i = 0; i < 4; i++) { const x = cx + (i - 1.5) * (cardW + cardGap); characterButtons[i].set(x - cardW / 2, cardTop, x + cardW / 2, cardTop + cardH); }
     for (let i = 0; i < 6; i++) { const x = cx - 95 * u + i * 66 * u; customColorBtns[i].set(x - 26 * u, h * 0.27, x + 26 * u, h * 0.27 + 52 * u); }
-    for (let i = 0; i < 4; i++) { const x = cx - 95 * u + i * 112 * u; customHeadBtns[i].set(x - 50 * u, h * 0.44, x + 50 * u, h * 0.44 + 52 * u); }
-    for (let i = 0; i < 4; i++) { const x = cx - 95 * u + i * 112 * u; customTraitBtns[i].set(x - 50 * u, h * 0.61, x + 50 * u, h * 0.61 + 52 * u); }
+    const optionStep = (compact ? 136 : 112) * u, optionHalf = (compact ? 63 : 50) * u, optionStart = cx - (compact ? 75 : 95) * u;
+    for (let i = 0; i < 4; i++) { const x = optionStart + i * optionStep; customHeadBtns[i].set(x - optionHalf, h * 0.44, x + optionHalf, h * 0.44 + 52 * u); }
+    for (let i = 0; i < 4; i++) { const x = optionStart + i * optionStep; customTraitBtns[i].set(x - optionHalf, h * 0.61, x + optionHalf, h * 0.61 + 52 * u); }
     customSaveBtn.set(cx - 160 * u, h * 0.79, cx + 160 * u, h * 0.79 + 62 * u);
     installBtn.set(cx - 75 * u, 20 * u, cx + 75 * u, 72 * u);
-    levelStrip.set(32 * u, h - 136 * u, w - 32 * u, h - 54 * u);
+    levelStrip.set(edgeL, h - 136 * u, w - edgeR, h - 54 * u);
     centerSelection();
   }
   window.addEventListener('resize', resize);
@@ -802,9 +818,14 @@
     ctx.restore();
   }
 
+  function drawArrow(r, dir, pressed) {
+    const size = r.width() * 0.17, x = r.centerX(), y = r.centerY();
+    ctx.fillStyle = pressed ? '#081722' : '#e9f6f3';
+    ctx.beginPath(); ctx.moveTo(x + dir * size, y); ctx.lineTo(x - dir * size * 0.8, y - size); ctx.lineTo(x - dir * size * 0.8, y + size); ctx.closePath(); ctx.fill();
+  }
   function button(r, s, accent, icon = 0, off = false) {
     roundRect(r.left, r.top, r.width(), r.height(), 14 * u, accent ? '#ffcd77' : 'rgba(23,53,67,0.93)');
-    let font = 20;
+    let font = compact ? 24 : 20;
     const iconSpace = icon === 0 ? 0 : 34 * u;
     ctx.font = `bold ${(font * u) | 0}px -apple-system, sans-serif`;
     const avail = r.width() - 32 * u - iconSpace;
@@ -1156,9 +1177,10 @@
     const lastRow = endlessMode ? first + 27 : Math.min(boundary + (level < LEVELS - 1 ? 26 : -1), first + 27);
     const rotation = cameraLane * Math.PI / 4;
 
-    for (let row = lastRow; row >= first; row--) {
-      const z0 = Math.max(0.15, row * 4 - distance), z1 = (row + 1) * 4 - distance;
-      if (z1 <= 0.15) continue;
+    // Floor rows continue past the camera so the tunnel reaches the screen edges at any aspect ratio.
+    for (let row = lastRow; row >= Math.max(0, ((distance - 2.4) / 4) | 0); row--) {
+      const z0 = Math.max(0.15, row * 4 - distance), z1 = (row + 1) * 4 - distance, nearZ = Math.max(-2.4, row * 4 - distance);
+      if (z1 <= -2.4) continue;
       const drawLevel = row >= boundary ? level + 1 : level;
       const localRow = row >= boundary ? row - boundary : row;
       for (let side = 0; side < 8; side++) {
@@ -1170,7 +1192,7 @@
         const mid = (a + b) / 2, zc = (z0 + z1) / 2;
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(px(a, z0), py(a, z0)); ctx.lineTo(px(b, z0), py(b, z0));
+        ctx.moveTo(px(a, nearZ), py(a, nearZ)); ctx.lineTo(px(b, nearZ), py(b, nearZ));
         ctx.lineTo(px(b, z1), py(b, z1)); ctx.lineTo(px(a, z1), py(a, z1));
         ctx.closePath();
         const fade = Math.max(0.18, 1 - z0 / 115);
@@ -1183,6 +1205,7 @@
         ctx.strokeStyle = `rgba(103,223,204,${0.49 * fade})`;
         ctx.lineWidth = Math.max(0.7, 1.6 * u);
         ctx.stroke();
+        if (z1 <= 0.15) { ctx.restore(); continue; }
 
         if (tile === BOOST) {
           ctx.strokeStyle = '#d6fbff'; ctx.lineWidth = 2.4 * u;
@@ -1279,22 +1302,24 @@
       ctx.fillStyle = 'rgba(8,23,34,0.9)';
       ctx.fillRect(0, 0, w, 112 * u);
       if (endlessMode) {
-        text('Sonsuz Yörünge', 32 * u, 46 * u, 22, '#ffcd77', true, 'left');
-        text(`En İyi: ${bestEndlessMeters} m`, 32 * u, 77 * u, 16, '#a7c3cb', false, 'left');
+        text('Sonsuz Yörünge', edgeL, 46 * u, 22, '#ffcd77', true, 'left');
+        text(`En İyi: ${bestEndlessMeters} m`, edgeL, 77 * u, fs(16), '#a7c3cb', false, 'left');
         text(`${currentMeters} m`, cx, 54 * u, 28, '#e9f6f3', true, 'center');
-        text(`◆ ${totalCrystals} · Çarpan x${comboMultiplier}`, cx, 84 * u, 15, '#ffcd77', true, 'center');
+        text(`◆ ${totalCrystals} · Çarpan x${comboMultiplier}`, cx, 84 * u, fs(15), '#ffcd77', true, 'center');
       } else {
-        text(`Bölüm ${level + 1} / ${LEVELS}`, 32 * u, 46 * u, 22, '#e9f6f3', true, 'left');
-        text(DATA.levels[level].name + (shieldActive ? ' · Kalkan Aktif' : ''), 32 * u, 77 * u, 16, shieldActive ? '#42e8ff' : '#a7c3cb', false, 'left');
+        text(`Bölüm ${level + 1} / ${LEVELS}`, edgeL, 46 * u, 22, '#e9f6f3', true, 'left');
+        text(DATA.levels[level].name + (shieldActive ? ' · Kalkan Aktif' : ''), edgeL, 77 * u, fs(16), shieldActive ? '#42e8ff' : '#a7c3cb', false, 'left');
         const prog = Math.min(1, (distance + 5) / (DATA.levels[level].length * 4));
         roundRect(cx - 130 * u, 38 * u, 260 * u, 7 * u, 4 * u, '#274551');
         roundRect(cx - 130 * u, 38 * u, Math.max(8 * u, 260 * u * prog), 7 * u, 4 * u, '#67dfcc');
-        text(`%${(prog * 100) | 0} · ◆ ${totalCrystals} (x${comboMultiplier})`, cx, 78 * u, 16, '#e9f6f3', false, 'center');
+        text(`%${(prog * 100) | 0} · ◆ ${totalCrystals} (x${comboMultiplier})`, cx, 78 * u, fs(16), '#e9f6f3', false, 'center');
       }
       button(inGameMusic, audio.musicOn ? 'Müzik: Açık' : 'Müzik: Kapalı', false, 5, !audio.musicOn);
       button(pauseBtn, '||', false);
-      button(leftBtn, '◀', held(1));
-      button(rightBtn, '▶', held(2));
+      button(leftBtn, '', held(1));
+      button(rightBtn, '', held(2));
+      drawArrow(leftBtn, -1, held(1));
+      drawArrow(rightBtn, 1, held(2));
       button(jumpBtn, 'Zıpla', true, 4, false);
     }
 
@@ -1317,8 +1342,8 @@
       button(trackButton, audio.musicLabel(), false, 9, false);
       button(musicButton, audio.musicOn ? 'Müzik: Açık' : 'Müzik: Kapalı', false, 5, !audio.musicOn);
       button(effectsButton, audio.effectsOn ? 'Efekt: Açık' : 'Efekt: Kapalı', false, 6, !audio.effectsOn);
-      text('Yörünge Koşusu', cx, h * 0.20, 44, '#e9f6f3', true, 'center');
-      text('Zıpla. Yön değiştir. Uzaylılardan kaç.', cx, h * 0.265, 20, '#b9d1d5', false, 'center');
+      text('Yörünge Koşusu', cx, compact ? 120 * u : h * 0.20, 44, '#e9f6f3', true, 'center');
+      if (!compact) text('Zıpla. Yön değiştir. Uzaylılardan kaç.', cx, h * 0.265, 20, '#b9d1d5', false, 'center');
       for (let i = 0; i < 4; i++) {
         const sel = i === character, col = Runner.color(i), head = Runner.headType(i), r = characterButtons[i];
         roundRect(r.left, r.top, r.width(), r.height(), 12 * u, sel ? '#345766' : '#173543', sel ? col : null, 3 * u);
@@ -1329,18 +1354,18 @@
         if (i === 3) drawIcon(13, r.left + 18 * u, r.top + 18 * u, 16 * u, '#b9d1d5', false);
         const x = r.centerX();
         const hop = sel ? Math.sin(Math.max(0, selectPulse / 0.45) * Math.PI) * 12 * u : 0;
-        ctx.save(); ctx.translate(x, r.top + 56 * u - hop); ctx.scale(0.62, 0.62);
+        ctx.save(); ctx.translate(x, r.top + (compact ? 84 : 56) * u - hop); ctx.scale(compact ? 0.85 : 0.62, compact ? 0.85 : 0.62);
         drawRobotBody(i, animClock * 2.2 + i * 1.3, 0, 0, false, sel && animClock % 4.2 < 1.3 ? POSE_WAVE : POSE_IDLE);
         ctx.restore();
-        text(i === 3 ? 'Özel (Tasarım)' : characterNames[i], x, r.bottom - 38 * u, 17, sel ? col : '#e9f6f3', sel, 'center');
-        text(Runner.description(i), x, r.bottom - 14 * u, 13, '#e9f6f3', false, 'center');
+        text(i === 3 ? 'Özel (Tasarım)' : characterNames[i], x, r.bottom - 38 * u, fs(17), sel ? col : '#e9f6f3', sel, 'center');
+        text(Runner.description(i), x, r.bottom - 14 * u, fs(13), '#e9f6f3', false, 'center');
       }
       button(menuStart, `Başla · Bölüm ${level + 1}`, true, 1, false);
       button(endlessButton, bestEndlessMeters > 0 ? `Sonsuz · ${bestEndlessMeters} m` : 'Sonsuz Yörünge', false, 12, false);
-      text(DATA.levels[level].name, cx, menuStart.bottom + 27 * u, 18, '#b9d1d5', false, 'center');
+      text(DATA.levels[level].name, cx, menuStart.bottom + 27 * u, fs(18), '#b9d1d5', false, 'center');
       const starCount = flawlessSet.size + completedSet.size * 2;
       text('Bölümler', levelStrip.left, levelStrip.top - 18 * u, 22, '#e9f6f3', true, 'left');
-      text(`${unlocked + 1} / 50 açık · ★ ${starCount} · ◆ ${totalCrystals}`, levelStrip.right, levelStrip.top - 18 * u, 17, '#ffcd77', false, 'right');
+      text(`${unlocked + 1} / 50 açık · ★ ${starCount} · ◆ ${totalCrystals}`, levelStrip.right, levelStrip.top - 18 * u, fs(17), '#ffcd77', false, 'right');
 
       ctx.save();
       ctx.beginPath(); ctx.rect(levelStrip.left, levelStrip.top, levelStrip.width(), levelStrip.height()); ctx.clip();
@@ -1358,11 +1383,11 @@
             drawIcon(10, x + 22 * u + s * 16 * u, levelStrip.bottom - 16 * u, 12 * u, sc, false);
           }
         } else {
-          text(i > unlocked ? 'Kilitli' : i === level ? 'Seçili' : 'Açık', x + 38 * u, levelStrip.bottom - 13 * u, 13, i === level ? '#081722' : '#b9d1d5', false, 'center');
+          text(i > unlocked ? 'Kilitli' : i === level ? 'Seçili' : 'Açık', x + 38 * u, levelStrip.bottom - 13 * u, fs(13), i === level ? '#081722' : '#b9d1d5', false, 'center');
         }
       }
       ctx.restore();
-      text(menuHint, cx, h - 20 * u, 16, '#b9d1d5', false, 'center');
+      text(menuHint, cx, h - 20 * u, fs(16), '#b9d1d5', false, 'center');
       if (canOfferInstall()) button(installBtn, 'Yükle', false, 14, false);
       if (installPanel && INSTALL_STEPS) {
         ctx.fillStyle = 'rgba(8,23,34,0.82)'; ctx.fillRect(0, 0, w, h);
@@ -1394,24 +1419,24 @@
       drawRobotBody(3, elapsed * 9.6 * (customTrait === 2 ? 0.85 : customTrait === 1 ? 0.92 : customTrait === 3 ? 0.8 : 1), jumpBlend, jumping ? jumpTime / jumpSeconds : 0, false, POSE_RUN);
       ctx.restore();
       text('Özel Robot', cx - 280 * u, h * 0.72 - 42 * u, 20, Runner.color(3), true, 'center');
-      text(Runner.description(3), cx - 280 * u, h * 0.72 - 18 * u, 14, '#e9f6f3', false, 'center');
-      text('Renk:', cx - 140 * u, h * 0.24, 18, '#b9d1d5', true, 'left');
+      text(Runner.description(3), cx - 280 * u, h * 0.72 - 18 * u, fs(14), '#e9f6f3', false, 'center');
+      text('Renk:', cx - 140 * u, h * 0.24, fs(18), '#b9d1d5', true, 'left');
       for (let i = 0; i < 6; i++) {
         const r = customColorBtns[i];
         roundRect(r.left, r.top, r.width(), r.height(), 10 * u, DATA.palette[i], customColorIndex === i ? '#e9f6f3' : null, 3.5 * u);
         if (customColorIndex === i) drawIcon(8, r.centerX(), r.centerY(), 18 * u, '#081722', false);
       }
-      text('Başlık / Gövde Tipi:', cx - 140 * u, h * 0.41, 18, '#b9d1d5', true, 'left');
+      text('Başlık / Gövde Tipi:', cx - 140 * u, h * 0.41, fs(18), '#b9d1d5', true, 'left');
       for (let i = 0; i < 4; i++) {
         const r = customHeadBtns[i], sel = customHeadType === i;
         roundRect(r.left, r.top, r.width(), r.height(), 10 * u, sel ? '#345766' : '#173543', sel ? '#ffcd77' : null, 2.5 * u);
-        text(DATA.headNames[i], r.centerX(), r.centerY() + 6 * u, 15, sel ? '#ffcd77' : '#e9f6f3', sel, 'center');
+        text(DATA.headNames[i], r.centerX(), r.centerY() + 6 * u, fs(15), sel ? '#ffcd77' : '#e9f6f3', sel, 'center');
       }
-      text('Yetenek Gücü:', cx - 140 * u, h * 0.58, 18, '#b9d1d5', true, 'left');
+      text('Yetenek Gücü:', cx - 140 * u, h * 0.58, fs(18), '#b9d1d5', true, 'left');
       for (let i = 0; i < 4; i++) {
         const r = customTraitBtns[i], sel = customTrait === i;
         roundRect(r.left, r.top, r.width(), r.height(), 10 * u, sel ? '#345766' : '#173543', sel ? '#ffcd77' : null, 2.5 * u);
-        text(DATA.traitNames[i], r.centerX(), r.centerY() + 6 * u, 14, sel ? '#ffcd77' : '#e9f6f3', sel, 'center');
+        text(DATA.traitNames[i], r.centerX(), r.centerY() + 6 * u, fs(14), sel ? '#ffcd77' : '#e9f6f3', sel, 'center');
       }
       button(customSaveBtn, 'Tamam', true, 8, false);
     }

@@ -461,14 +461,16 @@ public final class GameView extends View {
     }
     private float px(double a,double z){return cx+(float)(Math.sin(a)*3*focal/(z+3));}
     private float py(double a,double z){return cy+(float)(Math.cos(a)*3*focal/(z+3));}
+    private static final double TUNNEL_NEAR=-2.4;
     private void drawTunnel(Canvas c){
         int first=Math.max(0,(int)(distance/4));
         int boundary=endlessMode?first+1000:Track.length(level);
         int lastRow=endlessMode?first+27:Math.min(boundary+(level<Track.LEVELS-1?26:-1),first+27);
         double rotation=cameraLane*Math.PI/4;
-        for(int row=lastRow;row>=first;row--){
-            double z0=Math.max(.15,row*4-distance),z1=(row+1)*4-distance;
-            if(z1<=.15)continue;
+        // Floor rows continue past the camera so the tunnel reaches the screen edges at any aspect ratio.
+        for(int row=lastRow;row>=Math.max(0,(int)((distance+TUNNEL_NEAR)/4));row--){
+            double z0=Math.max(.15,row*4-distance),z1=(row+1)*4-distance,nearZ=Math.max(TUNNEL_NEAR,row*4-distance);
+            if(z1<=TUNNEL_NEAR)continue;
             int drawLevel=row>=boundary?level+1:level;
             int localRow=row>=boundary?row-boundary:row;
             for(int side=0;side<8;side++){
@@ -478,7 +480,7 @@ public final class GameView extends View {
                 }else if(drawLevel==level && collapse!=null && collapse.level==level && collapse.age(row,side,elapsed)>=0)continue;
                 if(tile==Track.HOLE)continue;
                 double a=side*Math.PI/4-Math.PI/8-rotation,b=a+Math.PI/4;
-                path.reset();path.moveTo(px(a,z0),py(a,z0));path.lineTo(px(b,z0),py(b,z0));path.lineTo(px(b,z1),py(b,z1));path.lineTo(px(a,z1),py(a,z1));path.close();
+                path.reset();path.moveTo(px(a,nearZ),py(a,nearZ));path.lineTo(px(b,nearZ),py(b,nearZ));path.lineTo(px(b,z1),py(b,z1));path.lineTo(px(a,z1),py(a,z1));path.close();
                 float fade=(float)Math.max(.18,1-z0/115);
                 int palette=endlessMode?endless.color(row):Track.color(drawLevel);float shade=side%2==0?1:.82f;
                 int r=(int)(Color.red(palette)*fade*shade),g=(int)(Color.green(palette)*fade*shade),bl=(int)(Color.blue(palette)*fade*shade);
@@ -486,6 +488,7 @@ public final class GameView extends View {
                 p.setColor(tile==Track.RED?Color.rgb((int)(198*fade),(int)(53*fade),(int)(59*fade)):tile==Track.BOOST?Color.rgb((int)(40*fade),(int)(195*fade),(int)(230*fade)):Color.rgb(r,g,bl));
                 c.drawPath(path,p);
                 p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(Math.max(.7f,1.6f*u));p.setColor(Color.argb((int)(125*fade),103,223,204));c.drawPath(path,p);p.setStyle(Paint.Style.FILL);
+                if(z1<=.15)continue;
                 if(tile==Track.RED){
                     p.setColor(0xffffb2a0);p.setStrokeWidth(2*u);
                     double mid=(a+b)/2,zc=(z0+z1)/2;

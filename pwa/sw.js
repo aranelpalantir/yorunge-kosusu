@@ -1,6 +1,6 @@
-const CACHE = 'yorunge-cb89511e1208';
+const CACHE = 'yorunge-079242759220';
 const FILES = [
-  './', './index.html', './manifest.json', './levels_data.js?v=cb89511e1208', './game.js?v=cb89511e1208',
+  './', './index.html', './manifest.json', './levels_data.js?v=079242759220', './game.js?v=079242759220',
   './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './assets/orbit.wav', './assets/ion.wav', './assets/drift.wav',
   './assets/turkish_march.wav', './assets/ode.wav', './assets/waltz.wav',
