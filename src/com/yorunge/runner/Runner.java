@@ -7,6 +7,9 @@ public final class Runner {
     public static final String[] COLOR_NAMES={"Kehribar","Buzul","Mor","Turkuaz","Mercan","Neon"};
     public static final String[] HEAD_NAMES={"Anten","Kanat","Miğfer","Taç"};
     public static final String[] TRAIT_NAMES={"Dengeli","Yüksek Zıplama","Hızlı Koşu","Süzülme"};
+    /** Difficulty scales all game time, so jump distances and course layouts stay exactly the same. */
+    public static final double[] DIFFICULTY_SPEED={1,1.2,1.4};
+    public static final String[] DIFFICULTY_NAMES={"Başlangıç","Orta","İleri"};
 
     public static int effectiveTrait(int character){return character==3?customTrait:character;}
     public static int color(int character,int[] defaults){

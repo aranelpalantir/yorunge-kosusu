@@ -78,9 +78,9 @@ public class TrackTest {
                 }
                 for(int character=0;character<3;character++)check(maxRun*4>Runner.speed(character,level)*Runner.jumpSeconds(character),"Fixed-wall jumping can finish");
             }
-            for(double step:new double[]{1.0/60,1.0/30,.035}){
-                for(int character=0;character<3;character++)simulate(level,step,character);
-                for(int trait=0;trait<4;trait++){Runner.customTrait=trait;simulate(level,step,3);}
+            for(double scale:Runner.DIFFICULTY_SPEED)for(double step:new double[]{1.0/60,1.0/30,.035}){
+                for(int character=0;character<3;character++)simulate(level,step*scale,character);
+                for(int trait=0;trait<4;trait++){Runner.customTrait=trait;simulate(level,step*scale,3);}
             }
             // Simulate actual launch physics at 60 and 30 FPS, including the full wall width.
             for(double dt:new double[]{1.0/60,1.0/30,.035}) {

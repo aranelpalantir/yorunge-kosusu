@@ -31,7 +31,8 @@ Oyun yüklü olarak açıldığında düğme görünmez.
 ## İçerik
 
 - **50 bölüm:** Sırayla açılır, her parkurun düzeni farklıdır ve denemeler arasında değişmez. Hız dört bölümde bir artar. Bölüm bitince sonraki bölüm otomatik başlar.
-- **Sonsuz Yörünge:** Her denemede yeni üretilen tünel, başlangıçta bir kalkan ve kaydedilen mesafe rekoru.
+- **Zorluk:** Başlangıç normal hızdır; Orta oyunu %20, İleri %40 hızlandırır. Parkurlar ve zıplama mesafeleri aynı kalır, tepki süresi kısalır. Açılan bölümler ortaktır.
+- **Sonsuz Yörünge:** Her denemede yeni üretilen tünel, başlangıçta bir kalkan ve her zorluk için ayrı kaydedilen mesafe rekoru.
 - **Tehlikeler:** Delikler, duvarlar, zincirleme çöken kırmızı plakalar ve geç bölümlerde devriye gezen uzaylılar. Kırmızı plaka inmeye başladıktan sonra 0,24 saniye içinde zıplayarak kurtulabilirsiniz.
 - **Toplanabilirler:** Çarpan ve Yörünge Çılgınlığı sağlayan kristaller, tek hatayı affeden kalkan küresi, sıçrama plakaları ve teğet geçiş ödülü. Kristaller birikir, henüz harcanamaz.
 - **Yıldızlar:** Biten bölüm 2 yıldız, tek seferde hatasız geçilen bölüm 3 yıldız verir.

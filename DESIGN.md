@@ -29,6 +29,9 @@ Sol üstteki parça seçici adlı parçalar arasında dolaşır ve sıra/toplam 
 ## Yıldızlar ve simgeler
 125 sabit konumlu yıldız parlak renklerle çizilir, aralarında daha büyük parlak yıldızlar bulunur. Özgün simgeler 24 birimlik çizgi simgelerdir ve 2 birimlik yuvarlak uçlu çizgiler kullanır. Yazı ve simge grup olarak ortalanır, yazı düğme genişliğine göre küçülür. Kilitli bölüm kartlarının sağ üstünde küçük bir kilit, seçili kartta onay işareti vardır.
 
+## Zorluk seçimi
+Ana menüde Başla düğmesinin altında üç seçenekli bir sıra bulunur; seçili olan kehribar çerçeve ve yazıyla gösterilir. Oyun sırasında üst bilgi değişmez. Bildirimler ve yazılar gerçek zamanla sayılır, böylece yüksek zorlukta ekranda daha kısa kalmaz.
+
 ## Yükleme
 PWA ana menüsünde üst ortada ikincil tarzda bir Yükle düğmesi bulunur; APK'da yoktur. Kendiliğinden açılır pencere gösterilmez. Tarayıcı destekliyorsa kendi penceresi açılır, desteklemiyorsa üç adımlı kısa bir panel görünür ve tek dokunuşla kapanır. Simge, kehribar tünel halkası içinde robotun başını gösterir; ana ekran kırpmaları için ayrı güvenli alanlı sürümleri vardır.
 

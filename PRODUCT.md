@@ -19,7 +19,9 @@ Kurup çevrimdışı oynayabileceği özgün bir tünel koşusu isteyen oyuncula
 ## Parkurlar
 50 bölüm tamamlandıkça sırayla açılır, sonraki bölüm otomatik başlar. Her parkur hem zıplama hem yön değiştirme gerektirir. Düzenler düzensizdir ama öğrenilebilmesi için denemeler arasında değişmez; fark edilir bir tekrar döngüsü yoktur. Parkurların düzeni ve rengi birbirinden farklıdır. Sonraki parkur bitişten önce görünür, geçişte "Bölüm ... bitti!" yazısı çıkar. Hız dört bölümde bir artar. Geç parkurlarda düz hatta devriye gezen uzaylılar vardır; çarpmak bölümü yeniden başlatır. İlk bölüm üç boyutlu görünen bir duvarla açılır.
 
-Sonsuz Yörünge her denemede yeni bir tünel üretir, başlangıçta kalkan verir ve en iyi mesafeyi kaydeder.
+Üç zorluk vardır: Başlangıç (normal), Orta (%20 hızlı) ve İleri (%40 hızlı). Zorluk tüm oyun zamanını ölçekler, bu yüzden parkurlar ve zıplama mesafeleri değişmez. Bölüm açma ve yıldızlar zorluktan bağımsızdır, varsayılan Başlangıç'tır.
+
+Sonsuz Yörünge her denemede yeni bir tünel üretir, başlangıçta kalkan verir ve her zorluk için en iyi mesafeyi ayrı kaydeder.
 
 ## Tehlikeler
 Kırmızı plakalar inmeye başladıktan sonra kısa bir kurtulma süresi tanır; geç kalınan zıplama düşüşe yol açar. Kenardan bağlı kırmızı plakalar aynı anda değil, gecikmeyle zincirleme çöker. Düşüş sırasında kamera aşağı takip eder.

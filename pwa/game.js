@@ -352,7 +352,11 @@
   let unlocked = Math.max(0, Math.min(LEVELS - 1, store.getInt('unlocked', 0)));
   let level = unlocked;
   let character = Math.max(0, Math.min(3, store.getInt('character', 0)));
-  let bestEndlessMeters = store.getInt('bestEndless', 0);
+  // Difficulty scales all game time, so jump distances and course layouts stay exactly the same.
+  const DIFFICULTY_SPEED = [1, 1.2, 1.4], DIFFICULTY_NAMES = ['Başlangıç', 'Orta', 'İleri'];
+  let difficulty = Math.max(0, Math.min(2, store.getInt('difficulty', 0)));
+  const bestEndlessKey = () => difficulty === 0 ? 'bestEndless' : `bestEndless${difficulty}`;
+  let bestEndlessMeters = store.getInt(bestEndlessKey(), 0);
   let totalCrystals = store.getInt('totalCrystals', 0);
   let flawlessSet = new Set((localStorage.getItem('orbit_flawless') || '').split(',').filter(Boolean).map(Number));
   let completedSet = new Set((localStorage.getItem('orbit_completed') || '').split(',').filter(Boolean).map(Number));
@@ -402,6 +406,7 @@
   const customTraitBtns = Array.from({ length: 4 }, rect);
   const customSaveBtn = rect();
   const installBtn = rect();
+  const difficultyBtns = [rect(), rect(), rect()];
 
   function maxScroll() { return Math.max(0, LEVELS * 88 * u - 12 * u - levelStrip.width()); }
   function centerSelection() { levelScroll = Math.max(0, Math.min(maxScroll(), level * 88 * u - levelStrip.width() / 2 + 38 * u)); }
@@ -450,6 +455,7 @@
     const startTop = compact ? 306 * u : h * 0.51, startH = (compact ? 68 : 62) * u;
     menuStart.set(cx - 310 * u, startTop, cx - 10 * u, startTop + startH);
     endlessButton.set(cx + 10 * u, startTop, cx + 310 * u, startTop + startH);
+    for (let i = 0; i < 3; i++) { const x = cx + (i - 1) * 160 * u; difficultyBtns[i].set(x - 75 * u, menuStart.bottom + 38 * u, x + 75 * u, menuStart.bottom + 84 * u); }
     const cardGap = 15 * u, cardW = compact ? Math.min((w - edgeL - edgeR - 3 * cardGap) / 4, 300 * u) : 160 * u;
     const cardTop = compact ? 140 * u : h * 0.31, cardH = (compact ? 152 : 114) * u;
     for (let i = 0; i < 4; i++) { const x = cx + (i - 1.5) * (cardW + cardGap); characterButtons[i].set(x - cardW / 2, cardTop, x + cardW / 2, cardTop + cardH); }
@@ -600,7 +606,7 @@
     if (state === ENDING) stride += dt * 11 * Math.max(0, 1 - endingTime / ENDING_WALK);
     if (state === RUN) {
       const trait = Runner.effectiveTrait(character), before = stride;
-      if (!airborne) stride += dt * Math.min(15, 7 + currentSpeed() * 0.3) * (trait === 2 ? 0.85 : trait === 1 ? 0.92 : trait === 3 ? 0.8 : 1);
+      if (!airborne) stride += dt * DIFFICULTY_SPEED[difficulty] * Math.min(15, 7 + currentSpeed() * 0.3) * (trait === 2 ? 0.85 : trait === 1 ? 0.92 : trait === 3 ? 0.8 : 1);
       if (trait === 2 && Math.floor(stride / Math.PI) !== Math.floor(before / Math.PI)) burst(robotX, robotY, 2, 46 * u, DUST_COLORS);
       if (airborne && !wasAirborne) { squashV -= 2.6; antennaV += Math.sin(animClock * 7) > 0 ? 34 : -34; }
     }
@@ -628,16 +634,17 @@
     ctx.globalAlpha = 1;
   }
 
-  function update(dt) {
+  function update(real) {
+    const dt = state === RUN ? real * DIFFICULTY_SPEED[difficulty] : real;
     if (state === RUN || state === FALL || state === CUSTOMIZE || state === ENDING) elapsed += dt;
-    restartNotice = Math.max(0, restartNotice - dt);
-    completionNotice = Math.max(0, completionNotice - dt);
-    signalTime = Math.max(0, signalTime - dt);
+    restartNotice = Math.max(0, restartNotice - real);
+    completionNotice = Math.max(0, completionNotice - real);
+    signalTime = Math.max(0, signalTime - real);
     boostTimer = Math.max(0, boostTimer - dt);
-    dustTime = Math.max(0, dustTime - dt);
-    shieldBreakTime = Math.max(0, shieldBreakTime - dt);
+    dustTime = Math.max(0, dustTime - real);
+    shieldBreakTime = Math.max(0, shieldBreakTime - real);
     frenzyTimer = Math.max(0, frenzyTimer - dt);
-    calloutTime = Math.max(0, calloutTime - dt);
+    calloutTime = Math.max(0, calloutTime - real);
     const cycle = elapsed % 7.2;
     const wantLook = state === ENDING ? endingTime > 2.4 : state === CUSTOMIZE || state === FALL || dizzyTime > 0 || completionNotice > 1.1 || calloutTime > 0 || frenzyTimer > 0 || (cycle > 4.5 && cycle < 6.1);
     const speedTurn = wantLook ? 5.5 : 4.2;
@@ -663,7 +670,7 @@
         currentMeters = (distance * 1.2) | 0;
         if (currentMeters > bestEndlessMeters) {
           bestEndlessMeters = currentMeters; newRecord = true;
-          store.setInt('bestEndless', bestEndlessMeters);
+          store.setInt(bestEndlessKey(), bestEndlessMeters);
         }
         if (!shieldActive && endless.hasShield(row, curLane) && Runner.height(character, air) < 0.65) {
           shieldActive = true; endless.consumeShield(row); audio.play(0);
@@ -1136,7 +1143,7 @@
     }
   }
   function drawSpeedLines() {
-    if (currentSpeed() < 9.8 && boostTimer <= 0) return;
+    if (currentSpeed() * DIFFICULTY_SPEED[difficulty] < 9.8 && boostTimer <= 0) return;
     const count = boostTimer > 0 ? 18 : 10;
     ctx.strokeStyle = boostTimer > 0 ? 'rgba(66,232,255,0.53)' : 'rgba(168,204,217,0.27)';
     ctx.lineWidth = (boostTimer > 0 ? 2.2 : 1.4) * u; ctx.lineCap = 'butt';
@@ -1399,6 +1406,11 @@
       button(menuStart, `Başla · Bölüm ${level + 1}`, true, 1, false);
       button(endlessButton, bestEndlessMeters > 0 ? `Sonsuz · ${bestEndlessMeters} m` : 'Sonsuz Yörünge', false, 12, false);
       text(DATA.levels[level].name, cx, menuStart.bottom + 27 * u, fs(18), '#b9d1d5', false, 'center');
+      for (let i = 0; i < 3; i++) {
+        const r = difficultyBtns[i], sel = difficulty === i;
+        roundRect(r.left, r.top, r.width(), r.height(), 10 * u, sel ? '#345766' : '#173543', sel ? '#ffcd77' : null, 2.5 * u);
+        text(DIFFICULTY_NAMES[i], r.centerX(), r.centerY() + 6 * u, fs(17), sel ? '#ffcd77' : '#e9f6f3', sel, 'center');
+      }
       const starCount = flawlessSet.size + completedSet.size * 2;
       text('Bölümler', levelStrip.left, levelStrip.top - 18 * u, 22, '#e9f6f3', true, 'left');
       text(`${unlocked + 1} / 50 açık · ★ ${starCount} · ◆ ${totalCrystals}`, levelStrip.right, levelStrip.top - 18 * u, fs(17), '#ffcd77', false, 'right');
@@ -1572,6 +1584,11 @@
       else if (effectsButton.contains(x, y)) audio.toggleEffects();
       else if (menuStart.contains(x, y)) { audio.play(0); flawlessRun = true; start(); }
       else if (endlessButton.contains(x, y)) { audio.play(0); startEndless(); }
+      else if (difficultyBtns.some(r => r.contains(x, y))) {
+        difficulty = difficultyBtns.findIndex(r => r.contains(x, y));
+        bestEndlessMeters = store.getInt(bestEndlessKey(), 0);
+        store.setInt('difficulty', difficulty); audio.play(1);
+      }
       else for (let i = 0; i < 4; i++) if (characterButtons[i].contains(x, y)) {
         character = i; store.setInt('character', i); audio.play(1); selectPulse = 0.45;
         if (i === 3) state = CUSTOMIZE;

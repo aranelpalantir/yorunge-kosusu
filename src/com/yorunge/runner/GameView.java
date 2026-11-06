@@ -17,6 +17,8 @@ public final class GameView extends View {
     private final RectF[] customHeadBtns={new RectF(),new RectF(),new RectF(),new RectF()};
     private final RectF[] customTraitBtns={new RectF(),new RectF(),new RectF(),new RectF()};
     private final RectF customSaveBtn=new RectF();
+    private final RectF[] difficultyBtns={new RectF(),new RectF(),new RectF()};
+    private int difficulty=0;
     private final int[] characterColors={0xffffcd77,0xff9bdeef,0xffd7a8ed};
     private final String[] characterNames={"Keşif","Nova","Atlas","Özel"};
     private GameAudio audio;
@@ -81,7 +83,8 @@ public final class GameView extends View {
         signalsSeen=prefs.getLong("signalsSeen",0);
         flawlessMask=prefs.getLong("flawlessMask",0);
         completedMask=prefs.getLong("completedMask",unlocked>0?((1L<<unlocked)-1):0);
-        bestEndlessMeters=prefs.getInt("bestEndless",0);
+        difficulty=Math.max(0,Math.min(2,prefs.getInt("difficulty",0)));
+        bestEndlessMeters=prefs.getInt(bestEndlessKey(),0);
         totalCrystals=prefs.getInt("totalCrystals",0);
         audio=new GameAudio(ctx,prefs);collapse=new Collapse(level);
         setContentDescription("Yörünge Koşusu. Sol ve sağ düğmeleriyle duvar değiştir, zıpla düğmesiyle boşlukları aş.");
@@ -204,7 +207,7 @@ public final class GameView extends View {
         if(state==RUN){
             int trait=Runner.effectiveTrait(character);
             double before=stride;
-            if(!airborne)stride+=dt*Math.min(15,7+currentSpeed()*.3)*(trait==2?.85:trait==1?.92:trait==3?.8:1);
+            if(!airborne)stride+=dt*Runner.DIFFICULTY_SPEED[difficulty]*Math.min(15,7+currentSpeed()*.3)*(trait==2?.85:trait==1?.92:trait==3?.8:1);
             if(trait==2 && (int)(stride/Math.PI)!=(int)(before/Math.PI))burst(robotX,robotY,2,46*u,DUST_COLORS);
             if(airborne && !wasAirborne){squashV-=2.6f;antennaV+=Math.sin(animClock*7)>0?34:-34;}
         }
@@ -230,11 +233,13 @@ public final class GameView extends View {
             c.drawRect(partX[i]-s,partY[i]-s*.7f,partX[i]+s,partY[i]+s*.7f,p);
         }
     }
-    private void update(double dt){
+    private String bestEndlessKey(){return difficulty==0?"bestEndless":"bestEndless"+difficulty;}
+    private void update(double real){
+        double dt=state==RUN?real*Runner.DIFFICULTY_SPEED[difficulty]:real;
         if(state==RUN || state==FALL || state==CUSTOMIZE || state==ENDING)elapsed+=dt;
-        restartNotice=Math.max(0,restartNotice-dt);completionNotice=Math.max(0,completionNotice-dt);signalTime=Math.max(0,signalTime-dt);
-        boostTimer=Math.max(0,boostTimer-dt);dustTime=Math.max(0,dustTime-dt);shieldBreakTime=Math.max(0,shieldBreakTime-dt);
-        frenzyTimer=Math.max(0,frenzyTimer-dt);calloutTime=Math.max(0,calloutTime-dt);
+        restartNotice=Math.max(0,restartNotice-real);completionNotice=Math.max(0,completionNotice-real);signalTime=Math.max(0,signalTime-real);
+        boostTimer=Math.max(0,boostTimer-dt);dustTime=Math.max(0,dustTime-real);shieldBreakTime=Math.max(0,shieldBreakTime-real);
+        frenzyTimer=Math.max(0,frenzyTimer-dt);calloutTime=Math.max(0,calloutTime-real);
         double cycle=elapsed%7.2;
         boolean wantLook=state==ENDING?endingTime>2.4:state==CUSTOMIZE || state==FALL || dizzyTime>0 || completionNotice>1.1 || calloutTime>0 || frenzyTimer>0 || (cycle>4.5 && cycle<6.1);
         float speedTurn=wantLook?5.5f:4.2f;
@@ -258,7 +263,7 @@ public final class GameView extends View {
                 currentMeters=(int)(distance*1.2);
                 if(currentMeters>bestEndlessMeters){
                     bestEndlessMeters=currentMeters;newRecord=true;
-                    prefs.edit().putInt("bestEndless",bestEndlessMeters).apply();
+                    prefs.edit().putInt(bestEndlessKey(),bestEndlessMeters).apply();
                 }
                 if(!shieldActive && endless.hasShield(row,curLane) && Runner.height(character,air)<.65){
                     shieldActive=true;endless.consumeShield(row);audio.play(0);
@@ -376,6 +381,7 @@ public final class GameView extends View {
         effectsButton.set(w-400*u,20*u,w-220*u,72*u);
         menuStart.set(cx-310*u,h*.51f,cx-10*u,h*.51f+62*u);
         endlessButton.set(cx+10*u,h*.51f,cx+310*u,h*.51f+62*u);
+        for(int i=0;i<3;i++){float x=cx+(i-1)*160*u;difficultyBtns[i].set(x-75*u,menuStart.bottom+38*u,x+75*u,menuStart.bottom+84*u);}
         for(int i=0;i<4;i++){float x=cx+(i-1.5f)*175*u;characterButtons[i].set(x-80*u,h*.31f,x+80*u,h*.31f+114*u);}
         for(int i=0;i<6;i++){float x=cx-95*u+i*66*u;customColorBtns[i].set(x-26*u,h*.27f,x+26*u,h*.27f+52*u);}
         for(int i=0;i<4;i++){float x=cx-95*u+i*112*u;customHeadBtns[i].set(x-50*u,h*.44f,x+50*u,h*.44f+52*u);}
@@ -464,7 +470,7 @@ public final class GameView extends View {
         p.setShader(null);
     }
     private void drawSpeedLines(Canvas c){
-        double spd=currentSpeed();
+        double spd=currentSpeed()*Runner.DIFFICULTY_SPEED[difficulty];
         if(spd<9.8 && boostTimer<=0)return;
         int count=boostTimer>0?18:10;
         p.setStrokeWidth((boostTimer>0?2.2f:1.4f)*u);
@@ -1036,6 +1042,13 @@ public final class GameView extends View {
         button(c,menuStart,"Başla · Bölüm "+(level+1),true,UiIcons.PLAY,false);
         button(c,endlessButton,bestEndlessMeters>0?"Sonsuz · "+bestEndlessMeters+" m":"Sonsuz Yörünge",false,UiIcons.INFINITY,false);
         text(c,Track.name(level)+(level>=20?" · Uzaylı devriyesi":""),cx,menuStart.bottom+27*u,18,0xffb9d1d5,false,Paint.Align.CENTER);
+        for(int i=0;i<3;i++){
+            RectF r=difficultyBtns[i];
+            boolean sel=difficulty==i;
+            p.setColor(sel?0xff345766:0xff173543);c.drawRoundRect(r,10*u,10*u,p);
+            if(sel){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2.5f*u);p.setColor(GOLD);c.drawRoundRect(r,10*u,10*u,p);p.setStyle(Paint.Style.FILL);}
+            text(c,Runner.DIFFICULTY_NAMES[i],r.centerX(),r.centerY()+6*u,17,sel?GOLD:INK,sel,Paint.Align.CENTER);
+        }
         text(c,"Bölümler",levelStrip.left,levelStrip.top-18*u,22,INK,true,Paint.Align.LEFT);
         int starCount=Long.bitCount(flawlessMask)+Long.bitCount(completedMask)*2;
         text(c,(unlocked+1)+" / 50 açık · ★ "+starCount+" · ◆ "+totalCrystals,levelStrip.right,levelStrip.top-18*u,17,GOLD,false,Paint.Align.RIGHT);
@@ -1100,6 +1113,11 @@ public final class GameView extends View {
             else if(effectsButton.contains(x,y))audio.toggleEffects();
             else if(menuStart.contains(x,y)){audio.play(0);flawlessRun=true;start();}
             else if(endlessButton.contains(x,y)){audio.play(0);startEndless();}
+            else if(difficultyBtns[0].contains(x,y)||difficultyBtns[1].contains(x,y)||difficultyBtns[2].contains(x,y)){
+                difficulty=difficultyBtns[0].contains(x,y)?0:difficultyBtns[1].contains(x,y)?1:2;
+                bestEndlessMeters=prefs.getInt(bestEndlessKey(),0);
+                prefs.edit().putInt("difficulty",difficulty).apply();audio.play(1);
+            }
             else for(int i=0;i<4;i++)if(characterButtons[i].contains(x,y)){
                 if(i==3){character=3;prefs.edit().putInt("character",3).apply();audio.play(1);state=CUSTOMIZE;}
                 else{character=i;prefs.edit().putInt("character",character).apply();audio.play(1);selectPulse=.45f;}
