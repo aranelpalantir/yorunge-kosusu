@@ -2,6 +2,8 @@
 
 Özgün, çevrimdışı ve yatay oynanan bir tünel koşusu. Android APK ve yüklenebilir PWA olarak üretilir. Oyun internet, hesap veya depolama izni istemez.
 
+**[Tarayıcıda oyna](https://aranelpalantir.github.io/yorunge-kosusu/)**
+
 ## Kurulum
 
 **Android:** `dist/Yorunge-Kosusu.apk` dosyasını cihaza kopyalayıp açın. Android isterse "Bilinmeyen uygulamaları yükle" iznini verin. APK yerel anahtarla imzalıdır, Play Store paketi değildir. Eski kurulumu silmeden güncelleyebilirsiniz; ilerleme korunur.
