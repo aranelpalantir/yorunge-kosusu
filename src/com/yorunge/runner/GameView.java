@@ -364,11 +364,11 @@ public final class GameView extends View {
         w=width;h=height;u=Math.min(w/1100f,h/650f);cx=w*.5f;cy=h*.40f;focal=h*.88f;
         float s=98*u,m=32*u;
         left.set(m,h-m-s,m+s,h-m);right.set(m+s+18*u,h-m-s,m+2*s+18*u,h-m);
-        jump.set(w-m-180*u,h-m-s,w-m,h-m);pause.set(w-m-64*u,m,w-m,m+58*u);
+        jump.set(w-m-180*u,h-m-s,w-m,h-m);pause.set(w-m-64*u,14*u,w-m,70*u);
         primary.set(cx-175*u,h*.61f,cx+175*u,h*.61f+66*u);
         secondary.set(cx-175*u,h*.61f+82*u,cx+175*u,h*.61f+140*u);
         trackButton.set(28*u,20*u,350*u,72*u);
-        inGameMusic.set(w-280*u,32*u,w-114*u,90*u);
+        inGameMusic.set(w-280*u,14*u,w-114*u,70*u);
         musicButton.set(w-208*u,20*u,w-28*u,72*u);
         effectsButton.set(w-400*u,20*u,w-220*u,72*u);
         menuStart.set(cx-310*u,h*.51f,cx-10*u,h*.51f+62*u);
@@ -899,24 +899,24 @@ public final class GameView extends View {
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold,Paint.Align align){p.setColor(color);p.setTextSize(size*u);p.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));p.setTextAlign(align);c.drawText(s,x,y,p);}
     private void drawHud(Canvas c){
-        p.setColor(0xe6081722);c.drawRect(0,0,w,112*u,p);
+        p.setColor(0xe6081722);c.drawRect(0,0,w,84*u,p);
         if(endlessMode){
-            text(c,"Sonsuz Yörünge",32*u,46*u,22,GOLD,true,Paint.Align.LEFT);
-            text(c,"En İyi: "+bestEndlessMeters+" m",32*u,77*u,16,0xffa7c3cb,false,Paint.Align.LEFT);
-            text(c,currentMeters+" m",cx,56*u,28,INK,true,Paint.Align.CENTER);
-            if(shieldActive)text(c,"Kalkan Aktif",cx,84*u,15,CYAN,true,Paint.Align.CENTER);
+            text(c,"Sonsuz Yörünge",32*u,36*u,22,GOLD,true,Paint.Align.LEFT);
+            text(c,"En İyi: "+bestEndlessMeters+" m",32*u,64*u,16,0xffa7c3cb,false,Paint.Align.LEFT);
+            text(c,currentMeters+" m",cx,40*u,28,INK,true,Paint.Align.CENTER);
+            if(shieldActive)text(c,"Kalkan Aktif",cx,66*u,15,CYAN,true,Paint.Align.CENTER);
         }else{
-            text(c,"Bölüm "+(level+1)+" / "+Track.LEVELS,32*u,46*u,22,INK,true,Paint.Align.LEFT);
-            text(c,Track.name(level)+(shieldActive?" · Kalkan Aktif":""),32*u,77*u,16,shieldActive?CYAN:0xffa7c3cb,false,Paint.Align.LEFT);
+            text(c,"Bölüm "+(level+1)+" / "+Track.LEVELS,32*u,36*u,22,INK,true,Paint.Align.LEFT);
+            text(c,Track.name(level)+(shieldActive?" · Kalkan Aktif":""),32*u,64*u,16,shieldActive?CYAN:0xffa7c3cb,false,Paint.Align.LEFT);
             if(state==RUN && level<Track.LEVELS-1 && Track.length(level)*4-distance<70){
                 text(c,"İleride: Bölüm "+(level+2),cx,cy-64*u,20,GOLD,true,Paint.Align.CENTER);
             }
             float prog=(float)Math.min(1,(distance+5)/(Track.length(level)*4));
-            p.setColor(0xff274551);c.drawRoundRect(cx-130*u,38*u,cx+130*u,45*u,4*u,4*u,p);p.setColor(MINT);c.drawRoundRect(cx-130*u,38*u,cx-130*u+260*u*prog,45*u,4*u,4*u,p);
-            text(c,"%"+(int)(prog*100)+" · ◆ "+totalCrystals+" (x"+comboMultiplier+")",cx,78*u,16,INK,false,Paint.Align.CENTER);
+            p.setColor(0xff274551);c.drawRoundRect(cx-130*u,26*u,cx+130*u,33*u,4*u,4*u,p);p.setColor(MINT);c.drawRoundRect(cx-130*u,26*u,cx-130*u+260*u*prog,33*u,4*u,4*u,p);
+            text(c,"%"+(int)(prog*100)+" · ◆ "+totalCrystals+" (x"+comboMultiplier+")",cx,62*u,16,INK,false,Paint.Align.CENTER);
         }
         if(endlessMode){
-            text(c,"◆ "+totalCrystals+" · Çarpan x"+comboMultiplier,cx,84*u,15,frenzyTimer>0?0xffff9b54:GOLD,true,Paint.Align.CENTER);
+            text(c,"◆ "+totalCrystals+" · Çarpan x"+comboMultiplier,cx,66*u,15,frenzyTimer>0?0xffff9b54:GOLD,true,Paint.Align.CENTER);
         }
         button(c,inGameMusic,audio.musicOn?"Müzik: Açık":"Müzik: Kapalı",false,UiIcons.MUSIC,!audio.musicOn);
         button(c,pause,"",false);p.setColor(INK);c.drawRect(pause.centerX()-9*u,pause.centerY()-10*u,pause.centerX()-3*u,pause.centerY()+10*u,p);c.drawRect(pause.centerX()+3*u,pause.centerY()-10*u,pause.centerX()+9*u,pause.centerY()+10*u,p);

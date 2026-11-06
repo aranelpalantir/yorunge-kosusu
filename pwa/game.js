@@ -437,11 +437,11 @@
     leftBtn.set(edgeL, h - edgeB - s, edgeL + s, h - edgeB);
     rightBtn.set(edgeL + s + gap, h - edgeB - s, edgeL + 2 * s + gap, h - edgeB);
     jumpBtn.set(w - edgeR - jumpW, h - edgeB - s, w - edgeR, h - edgeB);
-    pauseBtn.set(w - edgeR - 64 * u, m, w - edgeR, m + 58 * u);
+    pauseBtn.set(w - edgeR - 64 * u, 14 * u, w - edgeR, 70 * u);
     primaryBtn.set(cx - 175 * u, h * 0.61, cx + 175 * u, h * 0.61 + 66 * u);
     secondaryBtn.set(cx - 175 * u, h * 0.61 + 82 * u, cx + 175 * u, h * 0.61 + 140 * u);
     trackButton.set(edgeL, 20 * u, edgeL + 322 * u, 72 * u);
-    inGameMusic.set(w - edgeR - 248 * u, 32 * u, w - edgeR - 82 * u, 90 * u);
+    inGameMusic.set(w - edgeR - 248 * u, 14 * u, w - edgeR - 82 * u, 70 * u);
     musicButton.set(w - edgeR - 180 * u, 20 * u, w - edgeR, 72 * u);
     effectsButton.set(w - edgeR - 372 * u, 20 * u, w - edgeR - 192 * u, 72 * u);
     const startTop = compact ? 306 * u : h * 0.51, startH = (compact ? 68 : 62) * u;
@@ -1328,19 +1328,19 @@
     // HUD & Controls
     if (state === RUN || state === PAUSE || (state === FALL && fall <= 1.1)) {
       ctx.fillStyle = 'rgba(8,23,34,0.9)';
-      ctx.fillRect(0, 0, w, 112 * u);
+      ctx.fillRect(0, 0, w, 84 * u);
       if (endlessMode) {
-        text('Sonsuz Yörünge', edgeL, 46 * u, 22, '#ffcd77', true, 'left');
-        text(`En İyi: ${bestEndlessMeters} m`, edgeL, 77 * u, fs(16), '#a7c3cb', false, 'left');
-        text(`${currentMeters} m`, cx, 54 * u, 28, '#e9f6f3', true, 'center');
-        text(`◆ ${totalCrystals} · Çarpan x${comboMultiplier}`, cx, 84 * u, fs(15), '#ffcd77', true, 'center');
+        text('Sonsuz Yörünge', edgeL, 36 * u, 22, '#ffcd77', true, 'left');
+        text(`En İyi: ${bestEndlessMeters} m`, edgeL, 64 * u, fs(16), '#a7c3cb', false, 'left');
+        text(`${currentMeters} m`, cx, 40 * u, 28, '#e9f6f3', true, 'center');
+        text(`◆ ${totalCrystals} · Çarpan x${comboMultiplier}`, cx, 66 * u, fs(15), '#ffcd77', true, 'center');
       } else {
-        text(`Bölüm ${level + 1} / ${LEVELS}`, edgeL, 46 * u, 22, '#e9f6f3', true, 'left');
-        text(DATA.levels[level].name + (shieldActive ? ' · Kalkan Aktif' : ''), edgeL, 77 * u, fs(16), shieldActive ? '#42e8ff' : '#a7c3cb', false, 'left');
+        text(`Bölüm ${level + 1} / ${LEVELS}`, edgeL, 36 * u, 22, '#e9f6f3', true, 'left');
+        text(DATA.levels[level].name + (shieldActive ? ' · Kalkan Aktif' : ''), edgeL, 64 * u, fs(16), shieldActive ? '#42e8ff' : '#a7c3cb', false, 'left');
         const prog = Math.min(1, (distance + 5) / (DATA.levels[level].length * 4));
-        roundRect(cx - 130 * u, 38 * u, 260 * u, 7 * u, 4 * u, '#274551');
-        roundRect(cx - 130 * u, 38 * u, Math.max(8 * u, 260 * u * prog), 7 * u, 4 * u, '#67dfcc');
-        text(`%${(prog * 100) | 0} · ◆ ${totalCrystals} (x${comboMultiplier})`, cx, 78 * u, fs(16), '#e9f6f3', false, 'center');
+        roundRect(cx - 130 * u, 26 * u, 260 * u, 7 * u, 4 * u, '#274551');
+        roundRect(cx - 130 * u, 26 * u, Math.max(8 * u, 260 * u * prog), 7 * u, 4 * u, '#67dfcc');
+        text(`%${(prog * 100) | 0} · ◆ ${totalCrystals} (x${comboMultiplier})`, cx, 62 * u, fs(16), '#e9f6f3', false, 'center');
       }
       button(inGameMusic, audio.musicOn ? 'Müzik: Açık' : 'Müzik: Kapalı', false, 5, !audio.musicOn);
       button(pauseBtn, '||', false);
