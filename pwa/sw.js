@@ -1,4 +1,4 @@
-const CACHE = 'yorunge-3dc6cb0f1d7f';
+const CACHE = 'yorunge-5343005cd0bd';
 const FILES = [
   './', './index.html', './manifest.json', './levels_data.js', './game.js',
   './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './apple-touch-icon.png',

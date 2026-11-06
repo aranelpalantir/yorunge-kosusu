@@ -398,9 +398,12 @@
   function centerSelection() { levelScroll = Math.max(0, Math.min(maxScroll(), level * 88 * u - levelStrip.width() / 2 + 38 * u)); }
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = window.innerWidth * dpr;
-    h = window.innerHeight * dpr;
+    // The canvas box is the source of truth: on phones window.innerHeight can differ from it, and it can lag behind a rotation.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), box = canvas.getBoundingClientRect();
+    const nextW = Math.round(box.width * dpr), nextH = Math.round(box.height * dpr);
+    if (nextW <= 0 || nextH <= 0 || (nextW === w && nextH === h)) return;
+    w = nextW;
+    h = nextH;
     canvas.width = w;
     canvas.height = h;
     u = Math.min(w / 1100, h / 650);
@@ -430,6 +433,9 @@
     centerSelection();
   }
   window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 350); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
   window.addEventListener('appinstalled', () => { installEvent = null; installPanel = false; menuHint = 'Oyun yüklendi'; });
   resize();
 
@@ -1424,8 +1430,7 @@
   // Unified pointer/touch input for iOS Safari & desktop
   function pos(t) {
     const r = canvas.getBoundingClientRect();
-    const dpr = canvas.width / r.width;
-    return { x: (t.clientX - r.left) * dpr, y: (t.clientY - r.top) * dpr };
+    return { x: (t.clientX - r.left) * canvas.width / r.width, y: (t.clientY - r.top) * canvas.height / r.height };
   }
 
   function handleDown(id, x, y) {

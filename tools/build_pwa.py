@@ -132,7 +132,7 @@ self.addEventListener('fetch', e => {
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Yörünge Koşusu">
@@ -143,7 +143,7 @@ self.addEventListener('fetch', e => {
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #081722; touch-action: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    canvas { display: block; width: 100vw; height: 100vh; }
+    canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
     #rotate-notice { display: none; position: fixed; inset: 0; background: #081722; color: #e9f6f3; align-items: center; justify-content: center; text-align: center; padding: 24px; font-size: 20px; z-index: 10; }
     @media (orientation: portrait) { #rotate-notice { display: flex; } }
   </style>
