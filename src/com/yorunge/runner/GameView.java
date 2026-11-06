@@ -116,8 +116,25 @@ public final class GameView extends View {
     private boolean held(int action){for(int i=0;i<touches.size();i++)if(touches.valueAt(i)==action)return true;return action==1?keyLeft:action==2?keyRight:keyJump;}
     private void turn(int dir){targetLane+=dir;repeat=.22;audio.play(1);}
     private void leap(){if(state==RUN && air<=0){jumpFromDrop=supportDrop();air=Runner.jumpSeconds(character);audio.play(0);}}
+    private boolean openTile(int row,int side){
+        if(endlessMode)return endless.tile(row,side)==Track.HOLE || endless.collapseAge(row,side,elapsed)>=0;
+        return Track.tile(level,row,side)==Track.HOLE || (collapse!=null && collapse.level==level && collapse.age(row,side,elapsed)>=0);
+    }
+    /** Walls and patrol hits stop the robot on solid floor; only holes and collapsed plates let it drop. */
+    private boolean fallIsSolid(){return !openTile((int)((distance+5)/4),Track.wrap((int)Math.round(lane)));}
+    /** Keeps whatever falls through this tile behind the nearest floor edge in front of it. */
+    private void clipNearFloor(Canvas c,int row,int side){
+        int edge=row;
+        while(edge>0 && openTile(edge-1,side))edge--;
+        double z=Math.max(TUNNEL_NEAR,edge*4-distance),a=side*Math.PI/4-Math.PI/8-cameraLane*Math.PI/4,b=a+Math.PI/4;
+        float ax=px(a,z),ay=py(a,z),bx=px(b,z),by=py(b,z),dx=(bx-ax)*50,dy=(by-ay)*50;
+        float nx=cx-(ax+bx)/2,ny=cy-(ay+by)/2,len=Math.max(1,(float)Math.hypot(nx,ny));
+        nx=nx/len*(w+h)*3;ny=ny/len*(w+h)*3;
+        path.reset();path.moveTo(ax-dx,ay-dy);path.lineTo(bx+dx,by+dy);path.lineTo(bx+dx+nx,by+dy+ny);path.lineTo(ax-dx+nx,ay-dy+ny);path.close();
+        c.clipPath(path);
+    }
     private double supportDrop(){
-        if(state==FALL)return Collapse.drop(fall);
+        if(state==FALL)return fallIsSolid()?0:Collapse.drop(fall);
         if(air>0)return jumpFromDrop*Math.max(0,1-(Runner.jumpSeconds(character)-air)/.16);
         int r=(int)((distance+5)/4),l=(int)Math.round(lane);
         if(endlessMode)return endless==null?0:Collapse.drop(endless.collapseAge(r,l,elapsed));
@@ -559,7 +576,7 @@ public final class GameView extends View {
             double mid=(a+b)/2,z0=Math.max(.15,row*4-distance),z1=(row+1)*4-distance;
             if(z1<=.15)continue;
             float drop=(float)(Collapse.drop(age)*u);
-            c.save();c.translate((float)Math.sin(mid)*drop,(float)Math.cos(mid)*drop);
+            c.save();clipNearFloor(c,row,side);c.translate((float)Math.sin(mid)*drop,(float)Math.cos(mid)*drop);
             path.reset();path.moveTo(px(a,z0),py(a,z0));path.lineTo(px(b,z0),py(b,z0));path.lineTo(px(b,z1),py(b,z1));path.lineTo(px(a,z1),py(a,z1));path.close();
             p.setColor(0xffc6353b);c.drawPath(path,p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2*u);p.setColor(0xffffb2a0);c.drawPath(path,p);p.setStyle(Paint.Style.FILL);
             double zc=(z0+z1)/2;
@@ -865,6 +882,8 @@ public final class GameView extends View {
             c.drawOval(x-27*u*shadowScale,shadowY-8*u*shadowScale,x+27*u*shadowScale,shadowY+7*u*shadowScale,p);
         }
         float tumble=state==FALL?(float)(Math.sin(fall*9)*Math.min(1,fall*3)*22):0;
+        boolean fallingThrough=state==FALL && !fallIsSolid();
+        if(fallingThrough){c.save();clipNearFloor(c,(int)((distance+5)/4),Track.wrap((int)Math.round(lane)));}
         c.save();c.translate(x,y);c.rotate(leanAnim*-16+tumble);c.scale(scale*(1+squash*.7f),scale*(1-squash));
         if(shieldActive || frenzyTimer>0){
             p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(3f*u);
@@ -875,6 +894,7 @@ public final class GameView extends View {
         float airProg=air>0?(float)Math.max(0,Math.min(1,1-air/Runner.jumpSeconds(character))):0;
         drawRobotBody(c,character,stride,airPose,airProg,boostTimer>0 || frenzyTimer>0,pose);
         c.restore();
+        if(fallingThrough)c.restore();
         signalGlow=0;
     }
     private void text(Canvas c,String s,float x,float y,float size,int color,boolean bold,Paint.Align align){p.setColor(color);p.setTextSize(size*u);p.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));p.setTextAlign(align);c.drawText(s,x,y,p);}

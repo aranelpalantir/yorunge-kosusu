@@ -498,8 +498,28 @@
     return action === 1 ? keyLeft : action === 2 ? keyRight : keyJump;
   }
   function turn(dir) { targetLane += dir; repeat = 0.22; audio.play(1); }
+  function openTile(row, side) {
+    if (endlessMode) return endless.tile(row, side) === HOLE || endless.collapseAge(row, side, elapsed) >= 0;
+    const tiles = DATA.levels[level].tiles;
+    const tile = row < 0 || row >= tiles.length ? FLOOR : tiles[row][wrap(side)];
+    return tile === HOLE || (collapse ? collapse.age(row, wrap(side), elapsed) >= 0 : false);
+  }
+  // Walls and patrol hits stop the robot on solid floor; only holes and collapsed plates let it drop.
+  const fallIsSolid = () => !openTile(((distance + 5) / 4) | 0, wrap(Math.round(lane)));
+  // Keeps whatever falls through this tile behind the nearest floor edge in front of it.
+  function clipNearFloor(row, side) {
+    let edge = row;
+    while (edge > 0 && openTile(edge - 1, side)) edge--;
+    const z = Math.max(-2.4, edge * 4 - distance), a = side * Math.PI / 4 - Math.PI / 8 - cameraLane * Math.PI / 4, b = a + Math.PI / 4;
+    const ax = px(a, z), ay = py(a, z), bx = px(b, z), by = py(b, z), dx = (bx - ax) * 50, dy = (by - ay) * 50;
+    let nx = cx - (ax + bx) / 2, ny = cy - (ay + by) / 2;
+    const len = Math.max(1, Math.hypot(nx, ny));
+    nx = nx / len * (w + h) * 3; ny = ny / len * (w + h) * 3;
+    ctx.beginPath(); ctx.moveTo(ax - dx, ay - dy); ctx.lineTo(bx + dx, by + dy); ctx.lineTo(bx + dx + nx, by + dy + ny); ctx.lineTo(ax - dx + nx, ay - dy + ny); ctx.closePath();
+    ctx.clip();
+  }
   function supportDrop() {
-    if (state === FALL) return Collapse.drop(fall);
+    if (state === FALL) return fallIsSolid() ? 0 : Collapse.drop(fall);
     if (air > 0) return jumpFromDrop * Math.max(0, 1 - (Runner.jumpSeconds(character) - air) / 0.16);
     const r = ((distance + 5) / 4) | 0, l = Math.round(lane);
     if (endlessMode) return endless ? Collapse.drop(endless.collapseAge(r, l, elapsed)) : 0;
@@ -1131,6 +1151,7 @@
       if (z1 <= 0.15) continue;
       const drop = Collapse.drop(age) * u, zc = (z0 + z1) / 2;
       ctx.save();
+      clipNearFloor(row, side);
       ctx.translate(Math.sin(mid) * drop, Math.cos(mid) * drop);
       ctx.beginPath(); ctx.moveTo(px(a, z0), py(a, z0)); ctx.lineTo(px(b, z0), py(b, z0)); ctx.lineTo(px(b, z1), py(b, z1)); ctx.lineTo(px(a, z1), py(a, z1)); ctx.closePath();
       ctx.fillStyle = '#c6353b'; ctx.fill();
@@ -1281,6 +1302,8 @@
         ctx.beginPath(); ctx.ellipse(rx, shadowY - 0.5 * u * shadowScale, 27 * u * shadowScale, 7.5 * u * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
       }
       const tumble = state === FALL ? Math.sin(fall * 9) * Math.min(1, fall * 3) * 22 : 0;
+      const fallingThrough = state === FALL && !fallIsSolid();
+      if (fallingThrough) { ctx.save(); clipNearFloor(((distance + 5) / 4) | 0, wrap(Math.round(lane))); }
       ctx.save();
       ctx.translate(rx, ry);
       ctx.rotate((leanAnim * -16 + tumble) * Math.PI / 180);
@@ -1294,6 +1317,7 @@
       const airProg = air > 0 ? Math.max(0, Math.min(1, 1 - air / Runner.jumpSeconds(character))) : 0;
       drawRobotBody(character, stride, airPose, airProg, boostTimer > 0 || frenzyTimer > 0, pose);
       ctx.restore();
+      if (fallingThrough) ctx.restore();
       signalGlow = 0;
     }
     drawParticles();
