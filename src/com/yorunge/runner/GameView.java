@@ -846,7 +846,7 @@ public final class GameView extends View {
         float ground=cy+(float)(Math.cos(angle)*3*focal/(robotZ+3)*.924);
         float lift=(float)(Runner.height(character,air)*100*u)*depth;
         float y=ground-lift+(float)(supportDrop()*u);
-        float x=cx+(float)(Math.sin(angle)*3*focal/(robotZ+3));float scale=(state==FALL?(float)(1-fall*.6):1)*depth;
+        float x=cx+(float)(Math.sin(angle)*3*focal/(robotZ+3));float scale=(state==FALL?(float)(1-fall*.25):1)*depth;
         robotX=x;robotY=y;
         signalGlow=state==ENDING?Math.max(pulseAt(endingTime,1.2),pulseAt(endingTime,1.55)):0;
         if(dustTime>0){
@@ -858,7 +858,12 @@ public final class GameView extends View {
             }
         }
         float shadowScale=(float)Math.max(.45,1-Runner.height(character,air)*.45)*(1+squash*.6f)*depth;
-        p.setColor(0x66000000);c.drawOval(x-27*u*shadowScale,ground-8*u*shadowScale,x+27*u*shadowScale,ground+7*u*shadowScale,p);
+        // In a fall the shadow leaves the floor with the robot and fades, so it never hangs in empty space.
+        float shadowFade=state==FALL?(float)Math.max(0,1-fall/.35):1,shadowY=ground+(state==FALL?(float)(supportDrop()*u):0);
+        if(shadowFade>0){
+            p.setColor(Color.argb((int)(102*shadowFade),0,0,0));
+            c.drawOval(x-27*u*shadowScale,shadowY-8*u*shadowScale,x+27*u*shadowScale,shadowY+7*u*shadowScale,p);
+        }
         float tumble=state==FALL?(float)(Math.sin(fall*9)*Math.min(1,fall*3)*22):0;
         c.save();c.translate(x,y);c.rotate(leanAnim*-16+tumble);c.scale(scale*(1+squash*.7f),scale*(1-squash));
         if(shieldActive || frenzyTimer>0){

@@ -1266,7 +1266,7 @@
       const lift = Runner.height(character, air) * 100 * u * depth;
       const ry = ground - lift + supportDrop() * u;
       const rx = cx + Math.sin(angle) * 3 * focal / (robotZ + 3);
-      const scale = (state === FALL ? 1 - fall * 0.6 : 1) * depth;
+      const scale = (state === FALL ? 1 - fall * 0.25 : 1) * depth;
       signalGlow = state === ENDING ? Math.max(pulseAt(endingTime, 1.2), pulseAt(endingTime, 1.55)) : 0;
       robotX = rx; robotY = ry;
       if (dustTime > 0) {
@@ -1274,8 +1274,12 @@
         for (let i = -2; i <= 2; i++) if (i !== 0) circle(dustX + i * 14 * u * prog, dustY - 6 * u * prog, (4.5 - prog * 3) * u, dustColor);
       }
       const shadowScale = Math.max(0.45, 1 - Runner.height(character, air) * 0.45) * (1 + squash * 0.6) * depth;
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.beginPath(); ctx.ellipse(rx, ground - 0.5 * u * shadowScale, 27 * u * shadowScale, 7.5 * u * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
+      // In a fall the shadow leaves the floor with the robot and fades, so it never hangs in empty space.
+      const shadowFade = state === FALL ? Math.max(0, 1 - fall / 0.35) : 1, shadowY = ground + (state === FALL ? supportDrop() * u : 0);
+      if (shadowFade > 0) {
+        ctx.fillStyle = `rgba(0,0,0,${0.4 * shadowFade})`;
+        ctx.beginPath(); ctx.ellipse(rx, shadowY - 0.5 * u * shadowScale, 27 * u * shadowScale, 7.5 * u * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
+      }
       const tumble = state === FALL ? Math.sin(fall * 9) * Math.min(1, fall * 3) * 22 : 0;
       ctx.save();
       ctx.translate(rx, ry);
