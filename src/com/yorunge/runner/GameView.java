@@ -28,6 +28,9 @@ public final class GameView extends View {
     private long flawlessMask=0,completedMask=0;
     private double boostTimer=0,dustTime=0,shieldBreakTime=0,frenzyTimer=0,calloutTime=0,prevAir=0;
     private float headTurn=0;
+    // Drawing uses a camera closer to the robot; gameplay still reads distance.
+    private static final double CAMERA_PULL=1,ROBOT_Z=4;
+    private double viewD=0;
     // Visual-only animation state; never read by physics or collisions.
     private static final int POSE_RUN=0,POSE_IDLE=1,POSE_WAVE=2,POSE_FALL=3,POSE_CHEER=4;
     private static final int PARTICLES=64;
@@ -126,7 +129,7 @@ public final class GameView extends View {
     private void clipNearFloor(Canvas c,int row,int side){
         int edge=row;
         while(edge>0 && openTile(edge-1,side))edge--;
-        double z=Math.max(TUNNEL_NEAR,edge*4-distance),a=side*Math.PI/4-Math.PI/8-cameraLane*Math.PI/4,b=a+Math.PI/4;
+        double z=Math.max(TUNNEL_NEAR,edge*4-viewD),a=side*Math.PI/4-Math.PI/8-cameraLane*Math.PI/4,b=a+Math.PI/4;
         float ax=px(a,z),ay=py(a,z),bx=px(b,z),by=py(b,z),dx=(bx-ax)*50,dy=(by-ay)*50;
         float nx=cx-(ax+bx)/2,ny=cy-(ay+by)/2,len=Math.max(1,(float)Math.hypot(nx,ny));
         nx=nx/len*(w+h)*3;ny=ny/len*(w+h)*3;
@@ -169,8 +172,8 @@ public final class GameView extends View {
     }
     private void triggerDust(){
         double angle=(lane-cameraLane)*Math.PI/4;
-        dustX=cx+(float)(Math.sin(angle)*3*focal/8);
-        dustY=cy+(float)(Math.cos(angle)*3*focal/8*.924);
+        dustX=cx+(float)(Math.sin(angle)*3*focal/(ROBOT_Z+3));
+        dustY=cy+(float)(Math.cos(angle)*3*focal/(ROBOT_Z+3)*.924);
         dustTime=.28;
     }
     private void consumeShieldRescue(){
@@ -381,7 +384,7 @@ public final class GameView extends View {
         levelStrip.set(32*u,h-136*u,w-32*u,h-54*u);centerSelection();
     }
     @Override protected void onDraw(Canvas c){
-        long now=System.nanoTime();double dt=last==0?0:Math.min(.035,(now-last)/1e9);last=now;update(dt);updateAnim(dt);
+        long now=System.nanoTime();double dt=last==0?0:Math.min(.035,(now-last)/1e9);last=now;update(dt);updateAnim(dt);viewD=distance+CAMERA_PULL;
         float shake=shakeTime/.42f*9*u;
         c.drawColor(BG);c.save();c.translate((float)Math.sin(animClock*61)*shake,-fallCamera+(float)Math.cos(animClock*47)*shake);
         drawStars(c);drawSpeedLines(c);drawEndLight(c,false);drawTunnel(c);drawEndLight(c,true);drawEnemies(c);drawFallingPlate(c);drawRobot(c);drawParticles(c);
@@ -445,7 +448,7 @@ public final class GameView extends View {
     /** The light past the last tunnel row of the final level; the spill pass tints the walls in front of it. */
     private void drawEndLight(Canvas c,boolean spill){
         if(endlessMode || level!=Track.LEVELS-1 || state==MENU || state==WIN)return;
-        double z=Track.length(level)*4-distance;
+        double z=Track.length(level)*4-viewD;
         if(z>108)return;
         float reply=state==ENDING?Math.max(pulseAt(endingTime,1.95),pulseAt(endingTime,2.3)):0;
         float r=(float)(3*focal/(z+3))*(1.02f+reply*.05f);
@@ -480,13 +483,13 @@ public final class GameView extends View {
     private float py(double a,double z){return cy+(float)(Math.cos(a)*3*focal/(z+3));}
     private static final double TUNNEL_NEAR=-2.4;
     private void drawTunnel(Canvas c){
-        int first=Math.max(0,(int)(distance/4));
+        int first=Math.max(0,(int)(viewD/4));
         int boundary=endlessMode?first+1000:Track.length(level);
         int lastRow=endlessMode?first+27:Math.min(boundary+(level<Track.LEVELS-1?26:-1),first+27);
         double rotation=cameraLane*Math.PI/4;
         // Floor rows continue past the camera so the tunnel reaches the screen edges at any aspect ratio.
-        for(int row=lastRow;row>=Math.max(0,(int)((distance+TUNNEL_NEAR)/4));row--){
-            double z0=Math.max(.15,row*4-distance),z1=(row+1)*4-distance,nearZ=Math.max(TUNNEL_NEAR,row*4-distance);
+        for(int row=lastRow;row>=Math.max(0,(int)((viewD+TUNNEL_NEAR)/4));row--){
+            double z0=Math.max(.15,row*4-viewD),z1=(row+1)*4-viewD,nearZ=Math.max(TUNNEL_NEAR,row*4-viewD);
             if(z1<=TUNNEL_NEAR)continue;
             int drawLevel=row>=boundary?level+1:level;
             int localRow=row>=boundary?row-boundary:row;
@@ -566,14 +569,14 @@ public final class GameView extends View {
         }
     }
     private void drawFallingPlate(Canvas c){
-        int first=Math.max(0,(int)(distance/4));
+        int first=Math.max(0,(int)(viewD/4));
         int lastRow=endlessMode?first+27:Math.min(Track.length(level)-1,first+27);
         if(!endlessMode && (collapse==null || collapse.level!=level))return;
         for(int row=lastRow;row>=first;row--)for(int side=0;side<8;side++){
             double age=endlessMode?endless.collapseAge(row,side,elapsed):collapse.age(row,side,elapsed);
             if(age<0 || age>1.3)continue;
             double a=side*Math.PI/4-Math.PI/8-cameraLane*Math.PI/4,b=a+Math.PI/4;
-            double mid=(a+b)/2,z0=Math.max(.15,row*4-distance),z1=(row+1)*4-distance;
+            double mid=(a+b)/2,z0=Math.max(.15,row*4-viewD),z1=(row+1)*4-viewD;
             if(z1<=.15)continue;
             float drop=(float)(Collapse.drop(age)*u);
             c.save();clipNearFloor(c,row,side);c.translate((float)Math.sin(mid)*drop,(float)Math.cos(mid)*drop);
@@ -590,7 +593,7 @@ public final class GameView extends View {
     }
     private boolean alienDanger(double alienLane,double z){
         double diff=Math.abs(lane-alienLane)%8;diff=Math.min(diff,8-diff);
-        return state==RUN && diff<.6 && z>4 && z<21;
+        return state==RUN && diff<.6 && z>ROBOT_Z-1 && z<ROBOT_Z+16;
     }
     private void drawAlienSprite(Canvas c,double angle,double z,boolean markings,int seed,boolean danger){
         float x=cx+(float)(Math.sin(angle)*2.7*focal/(z+3));
@@ -635,10 +638,10 @@ public final class GameView extends View {
     }
     private void drawEnemies(Canvas c){
         if(endlessMode){
-            int first=Math.max(0,(int)(distance/4));
+            int first=Math.max(0,(int)(viewD/4));
             for(int row=first+26;row>=first;row--){
                 if(!endless.hasPatrol(row))continue;
-                double z=row*4+2-distance;
+                double z=row*4+2-viewD;
                 if(z<.1 || z>100)continue;
                 double angle=(endless.patrolLane(row,elapsed)-cameraLane)*Math.PI/4;
                 drawAlienSprite(c,angle,z,row>80,row,alienDanger(endless.patrolLane(row,elapsed),z));
@@ -647,7 +650,7 @@ public final class GameView extends View {
         }
         for(int section=Track.sectionCount(level)-1;section>=0;section--){
             if(!Enemy.active(level,section))continue;
-            double z=Enemy.position(level,section,elapsed)-distance;
+            double z=Enemy.position(level,section,elapsed)-viewD;
             if(z<.1 || z>100)continue;
             double angle=(Enemy.lane(level,section)-cameraLane)*Math.PI/4;
             drawAlienSprite(c,angle,z,level>=21,section,alienDanger(Enemy.lane(level,section),z));
@@ -858,7 +861,7 @@ public final class GameView extends View {
         if(state==FALL && fall>=1.1)return;
         double angle=(lane-cameraLane)*Math.PI/4;
         double walk=state==ENDING?Math.min(1,endingTime/ENDING_WALK):0;
-        double robotZ=5+12*(1-(1-walk)*(1-walk));
+        double robotZ=ROBOT_Z+12*(1-(1-walk)*(1-walk));
         float depth=(float)(8/(robotZ+3));
         float ground=cy+(float)(Math.cos(angle)*3*focal/(robotZ+3)*.924);
         float lift=(float)(Runner.height(character,air)*100*u)*depth;

@@ -387,6 +387,9 @@
   let keyLeft = false, keyRight = false, keyJump = false, overlayChoice = 0;
 
   let w = 0, h = 0, u = 1, cx = 0, cy = 0, focal = 0;
+  // Drawing uses a camera closer to the robot; gameplay still reads distance.
+  const CAMERA_PULL = 1, ROBOT_Z = 4;
+  let viewD = 0;
   // compact: a phone held sideways. Controls and text grow, and the safe area keeps them clear of the notch.
   let compact = false, safeL = 0, safeR = 0, safeB = 0, edgeL = 0, edgeR = 0;
   const fs = size => compact ? size * 1.22 : size;
@@ -510,7 +513,7 @@
   function clipNearFloor(row, side) {
     let edge = row;
     while (edge > 0 && openTile(edge - 1, side)) edge--;
-    const z = Math.max(-2.4, edge * 4 - distance), a = side * Math.PI / 4 - Math.PI / 8 - cameraLane * Math.PI / 4, b = a + Math.PI / 4;
+    const z = Math.max(-2.4, edge * 4 - viewD), a = side * Math.PI / 4 - Math.PI / 8 - cameraLane * Math.PI / 4, b = a + Math.PI / 4;
     const ax = px(a, z), ay = py(a, z), bx = px(b, z), by = py(b, z), dx = (bx - ax) * 50, dy = (by - ay) * 50;
     let nx = cx - (ax + bx) / 2, ny = cy - (ay + by) / 2;
     const len = Math.max(1, Math.hypot(nx, ny));
@@ -542,8 +545,8 @@
   function showCallout(msg, col) { calloutText = msg; calloutColor = col; calloutTime = 1.15; }
   function triggerDust() {
     const angle = (lane - cameraLane) * Math.PI / 4;
-    dustX = cx + Math.sin(angle) * 3 * focal / 8;
-    dustY = cy + Math.cos(angle) * 3 * focal / 8 * 0.924;
+    dustX = cx + Math.sin(angle) * 3 * focal / (ROBOT_Z + 3);
+    dustY = cy + Math.cos(angle) * 3 * focal / (ROBOT_Z + 3) * 0.924;
     dustTime = 0.28;
   }
   function consumeShieldRescue() {
@@ -1059,7 +1062,7 @@
 
   function alienDanger(alienLane, z) {
     let diff = Math.abs(lane - alienLane) % 8; diff = Math.min(diff, 8 - diff);
-    return state === RUN && diff < 0.6 && z > 4 && z < 21;
+    return state === RUN && diff < 0.6 && z > ROBOT_Z - 1 && z < ROBOT_Z + 16;
   }
   function drawAlienSprite(angle, z, markings, seed, danger) {
     const x = cx + Math.sin(angle) * 2.7 * focal / (z + 3);
@@ -1109,7 +1112,7 @@
   // The light past the last tunnel row of the final level; the spill pass tints the walls in front of it.
   function drawEndLight(spill) {
     if (endlessMode || level !== LEVELS - 1 || state === MENU || state === WIN) return;
-    const z = DATA.levels[level].length * 4 - distance;
+    const z = DATA.levels[level].length * 4 - viewD;
     if (z > 108) return;
     const reply = state === ENDING ? Math.max(pulseAt(endingTime, 1.95), pulseAt(endingTime, 2.3)) : 0;
     const r = 3 * focal / (z + 3) * (1.02 + reply * 0.05);
@@ -1140,14 +1143,14 @@
     }
   }
   function drawFallingPlates() {
-    const first = Math.max(0, (distance / 4) | 0);
+    const first = Math.max(0, (viewD / 4) | 0);
     const lastRow = endlessMode ? first + 27 : Math.min(DATA.levels[level].length - 1, first + 27);
     if (!endlessMode && !collapse) return;
     for (let row = lastRow; row >= first; row--) for (let side = 0; side < 8; side++) {
       const age = endlessMode ? endless.collapseAge(row, side, elapsed) : collapse.age(row, side, elapsed);
       if (age < 0 || age > 1.3) continue;
       const a = side * Math.PI / 4 - Math.PI / 8 - cameraLane * Math.PI / 4, b = a + Math.PI / 4;
-      const mid = (a + b) / 2, z0 = Math.max(0.15, row * 4 - distance), z1 = (row + 1) * 4 - distance;
+      const mid = (a + b) / 2, z0 = Math.max(0.15, row * 4 - viewD), z1 = (row + 1) * 4 - viewD;
       if (z1 <= 0.15) continue;
       const drop = Collapse.drop(age) * u, zc = (z0 + z1) / 2;
       ctx.save();
@@ -1167,6 +1170,7 @@
     last = now;
     update(dt);
     updateAnim(dt);
+    viewD = distance + CAMERA_PULL;
 
     ctx.fillStyle = '#081722';
     ctx.fillRect(0, 0, w, h);
@@ -1193,14 +1197,14 @@
     drawEndLight(false);
 
     // Tunnel
-    const first = Math.max(0, (distance / 4) | 0);
+    const first = Math.max(0, (viewD / 4) | 0);
     const boundary = endlessMode ? first + 1000 : DATA.levels[level].length;
     const lastRow = endlessMode ? first + 27 : Math.min(boundary + (level < LEVELS - 1 ? 26 : -1), first + 27);
     const rotation = cameraLane * Math.PI / 4;
 
     // Floor rows continue past the camera so the tunnel reaches the screen edges at any aspect ratio.
-    for (let row = lastRow; row >= Math.max(0, ((distance - 2.4) / 4) | 0); row--) {
-      const z0 = Math.max(0.15, row * 4 - distance), z1 = (row + 1) * 4 - distance, nearZ = Math.max(-2.4, row * 4 - distance);
+    for (let row = lastRow; row >= Math.max(0, ((viewD - 2.4) / 4) | 0); row--) {
+      const z0 = Math.max(0.15, row * 4 - viewD), z1 = (row + 1) * 4 - viewD, nearZ = Math.max(-2.4, row * 4 - viewD);
       if (z1 <= -2.4) continue;
       const drawLevel = row >= boundary ? level + 1 : level;
       const localRow = row >= boundary ? row - boundary : row;
@@ -1266,12 +1270,12 @@
     if (endlessMode) {
       for (let row = first + 26; row >= first; row--) {
         if (!endless.hasPatrol(row)) continue;
-        const z = row * 4 + 2 - distance;
+        const z = row * 4 + 2 - viewD;
         if (z >= 0.1 && z <= 100) { const pl = endless.patrolLane(row, elapsed); drawAlienSprite((pl - cameraLane) * Math.PI / 4, z, row > 80, row, alienDanger(pl, z)); }
       }
     } else {
       for (const e of DATA.levels[level].enemies) {
-        const z = enemyPos(e, elapsed) - distance;
+        const z = enemyPos(e, elapsed) - viewD;
         if (z >= 0.1 && z <= 100) drawAlienSprite((e.lane - cameraLane) * Math.PI / 4, z, level >= 21, e.section, alienDanger(e.lane, z));
       }
     }
@@ -1282,7 +1286,7 @@
     if (state !== FALL || fall < 1.1) {
       const angle = (lane - cameraLane) * Math.PI / 4;
       const walk = state === ENDING ? Math.min(1, endingTime / ENDING_WALK) : 0;
-      const robotZ = 5 + 12 * (1 - (1 - walk) * (1 - walk)), depth = 8 / (robotZ + 3);
+      const robotZ = ROBOT_Z + 12 * (1 - (1 - walk) * (1 - walk)), depth = 8 / (robotZ + 3);
       const ground = cy + Math.cos(angle) * 3 * focal / (robotZ + 3) * 0.924;
       const lift = Runner.height(character, air) * 100 * u * depth;
       const ry = ground - lift + supportDrop() * u;
