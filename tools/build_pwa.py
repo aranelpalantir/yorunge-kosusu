@@ -83,12 +83,12 @@ def main():
     (PWA / 'levels_data.js').write_bytes(out)
     # Content hash invalidates the offline cache whenever the game changes.
     icons = b''.join((PWA / name).read_bytes() for name in ICONS)
-    stamp = hashlib.sha256(out + (PWA / 'game.js').read_bytes() + icons).hexdigest()[:12]
+    stamp = hashlib.sha256(out + (PWA / 'game.js').read_bytes() + icons + Path(__file__).read_bytes()).hexdigest()[:12]
 
     (PWA / 'manifest.json').write_text('''{
   "id": "./",
   "name": "Yörünge Koşusu",
-  "short_name": "Yörünge",
+  "short_name": "Yörünge Koşusu",
   "lang": "tr",
   "scope": "./",
   "description": "Özgün çevrimdışı 3B tünel koşusu",
